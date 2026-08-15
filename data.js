@@ -68,7 +68,7 @@ window.CAFE_DATA = {
    "lat": 37.2846724,
    "lng": 127.023134,
    "query": "카페메이븐 행궁동",
-   "blog": 3239,
+   "blog": 3240,
    "buzz": 33,
    "kid": "yes",
    "pet": false,
