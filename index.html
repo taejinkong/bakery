@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>수원·용인·화성 추천 카페맵</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="data.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Apple SD Gothic Neo','Pretendard','Noto Sans KR',sans-serif; height:100vh; display:flex; flex-direction:column; overflow:hidden; background:#f8f9fa; }
+  header { background:#fff; border-bottom:1px solid #e9ecef; padding:10px 16px; z-index:1100; }
+  header h1 { font-size:17px; color:#212529; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  header h1 .sub { font-size:12px; font-weight:400; color:#868e96; }
+  .filters { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; align-items:center; }
+  .chip { border:1px solid #dee2e6; background:#fff; border-radius:20px; padding:4px 12px; font-size:12.5px; cursor:pointer; color:#495057; user-select:none; transition:all .15s; }
+  .chip:hover { border-color:#adb5bd; }
+  .chip.on { background:#343a40; color:#fff; border-color:#343a40; }
+  .chip.kid.on { background:#f76707; border-color:#f76707; }
+  .chip.ev.on { background:#2b8a3e; border-color:#2b8a3e; }
+  .divider { width:1px; height:18px; background:#dee2e6; margin:0 4px; }
+  #main { flex:1; display:flex; min-height:0; }
+  #sidebar { width:340px; background:#fff; border-right:1px solid #e9ecef; display:flex; flex-direction:column; min-height:0; }
+  #count { padding:8px 14px; font-size:12px; color:#868e96; border-bottom:1px solid #f1f3f5; }
+  #list { flex:1; overflow-y:auto; }
+  .card { padding:11px 14px; border-bottom:1px solid #f1f3f5; cursor:pointer; transition:background .12s; }
+  .card:hover { background:#f8f9fa; }
+  .card.active { background:#fff9db; }
+  .card .row1 { display:flex; align-items:center; gap:7px; }
+  .rank { font-size:11px; color:#adb5bd; width:20px; font-weight:700; }
+  .card .name { font-weight:700; font-size:14px; color:#212529; flex:1; }
+  .score { font-size:12px; font-weight:800; border-radius:6px; padding:2px 7px; color:#fff; }
+  .tier-S { background:#f59f00; } .tier-A { background:#4c6ef5; } .tier-B { background:#868e96; }
+  .card .row2 { margin:4px 0 0 27px; font-size:11.5px; color:#868e96; }
+  .tags { margin:5px 0 0 27px; display:flex; flex-wrap:wrap; gap:4px; }
+  .tag { font-size:10.5px; border-radius:4px; padding:2px 6px; background:#f1f3f5; color:#495057; }
+  .tag.kid-yes { background:#fff0e3; color:#e8590c; }
+  .tag.kid-no { background:#ffe3e3; color:#c92a2a; }
+  .tag.ev { background:#ebfbee; color:#2b8a3e; }
+  .tag.pet { background:#e7f5ff; color:#1971c2; }
+  #map { flex:1; min-width:0; }
+  .popup h3 { font-size:15px; margin-bottom:2px; }
+  .popup .parea { font-size:11.5px; color:#868e96; margin-bottom:6px; }
+  .popup .pscore { font-size:12px; margin-bottom:6px; }
+  .popup .phl { font-size:12.5px; color:#343a40; background:#f8f9fa; border-radius:6px; padding:6px 8px; margin-bottom:6px; line-height:1.45; }
+  .popup table { font-size:12px; border-collapse:collapse; width:100%; }
+  .popup td { padding:2.5px 0; vertical-align:top; }
+  .popup td:first-child { color:#868e96; width:74px; }
+  .popup a { color:#1971c2; font-size:12px; }
+  .leaflet-popup-content { margin:12px 14px; min-width:230px; }
+  .charger-note { font-size:10.5px; color:#adb5bd; }
+  #legend { position:absolute; bottom:18px; right:10px; z-index:1000; background:#fff; border-radius:8px; box-shadow:0 1px 6px rgba(0,0,0,.15); padding:8px 12px; font-size:11.5px; color:#495057; line-height:1.7; }
+  .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; }
+  @media (max-width:760px) {
+    #main { flex-direction:column-reverse; }
+    #sidebar { width:100%; height:38vh; border-right:none; border-top:1px solid #e9ecef; }
+    #map { height:62vh; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>☕ 수원 · 용인 · 화성 추천 카페맵 <span class="sub">블로그 언급량 + 후기 반응 점수화 · 상위 카페만 엄선 (기준일 <span id="updatedAt"></span>)</span></h1>
+  <div class="filters">
+    <span class="chip region on" data-r="all">전체 지역</span>
+    <span class="chip region" data-r="suwon">수원</span>
+    <span class="chip region" data-r="yongin">용인</span>
+    <span class="chip region" data-r="hwaseong">화성</span>
+    <span class="divider"></span>
+    <span class="chip tier" data-t="S">S등급만</span>
+    <span class="divider"></span>
+    <span class="chip kid" data-k="1">👶 아이동반 확인된 곳만</span>
+    <span class="chip ev" data-e="1">⚡ 충전소 1km 이내</span>
+    <span class="divider"></span>
+    <span class="chip" id="toggleChargers">충전소 표시</span>
+  </div>
+</header>
+<div id="main">
+  <div id="sidebar">
+    <div id="count"></div>
+    <div id="list"></div>
+  </div>
+  <div id="map"></div>
+</div>
+<div id="legend">
+  <span class="dot" style="background:#f59f00"></span>S등급 (85+)<br>
+  <span class="dot" style="background:#4c6ef5"></span>A등급 (70–84)<br>
+  <span class="dot" style="background:#868e96"></span>B등급 (55–69)<br>
+  <span class="dot" style="background:#2b8a3e"></span>전기차 충전소
+</div>
+
+<script>
+// 데이터는 data.js (scripts/update-data.mjs 가 자동 생성) 에서 로드
+const CAFES = CAFE_DATA.cafes;
+const CHARGERS = CAFE_DATA.chargers;
+const BLOG_SCALE = CAFE_DATA.blogScale || 4.3; // 소스(네이버/카카오)별 로그 분모 — 스크립트가 기록
+const SRC_LABEL = CAFE_DATA.source === "kakao" ? "블로그(카카오 검색)" : "블로그(네이버 검색)";
+document.getElementById("updatedAt").textContent = CAFE_DATA.updatedAt;
+
+// ─── 점수 계산 ─────────────────────────────────────────────
+// 블로그 언급량(0~60, 로그 스케일) + 후기 반응(buzz 0~40) = 100점 만점
+const MIN_SCORE = 55; // 이 점수 미만은 추천 목록에서 제외
+function blogPts(n){ return Math.min(60, 60*Math.log10(Math.max(n,1))/BLOG_SCALE); }
+function tierOf(s){ return s>=85 ? "S" : s>=70 ? "A" : "B"; }
+function havKm(a,b,c,d){
+  const R=6371, dLat=(c-a)*Math.PI/180, dLng=(d-b)*Math.PI/180;
+  const h=Math.sin(dLat/2)**2 + Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+CAFES.forEach(c=>{
+  c.bp = Math.round(blogPts(c.blog));
+  c.score = Math.min(100, c.bp + c.buzz);
+  c.tier = tierOf(c.score);
+  let best=null, bd=1e9;
+  CHARGERS.forEach(ch=>{ const d=havKm(c.lat,c.lng,ch.lat,ch.lng); if(d<bd){bd=d;best=ch;} });
+  c.evName=best.name; c.evKm=bd; c.evPub=best.pub;
+});
+const SHOWN = CAFES.filter(c=>c.score>=MIN_SCORE).sort((a,b)=>b.score-a.score);
+
+// ─── 지도 ─────────────────────────────────────────────────
+const map = L.map('map',{zoomControl:true}).setView([37.24,127.05],11);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:19, attribution:'&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+const tierColor={S:"#f59f00",A:"#4c6ef5",B:"#868e96"};
+const regionName={suwon:"수원",yongin:"용인",hwaseong:"화성"};
+const kidLabel={yes:"👶 아이동반 후기 확인",no:"🚫 노키즈존(일부 층)",unknown:"❔ 아이동반 확인 필요"};
+
+const chargerLayer=L.layerGroup();
+CHARGERS.forEach(ch=>{
+  L.circleMarker([ch.lat,ch.lng],{radius:5,color:"#2b8a3e",weight:1.5,fillColor:"#51cf66",fillOpacity:.9})
+   .bindPopup(`<b>⚡ ${ch.name}</b><br><span class="charger-note">${ch.pub?"공영/개방형으로 추정":"아파트·사업장 — 개방 여부 확인 필요"}</span>`)
+   .addTo(chargerLayer);
+});
+
+let markers={};
+function popupHtml(c){
+  const naver=`https://map.naver.com/p/search/${encodeURIComponent(c.name+" "+regionName[c.region])}`;
+  return `<div class="popup">
+    <h3>${c.name} <span class="score tier-${c.tier}">${c.score}</span></h3>
+    <div class="parea">${regionName[c.region]} · ${c.area}</div>
+    <div class="pscore">📝 ${SRC_LABEL} ${c.blog.toLocaleString()}건 (${c.bp}점) + 후기반응 ${c.buzz}점</div>
+    <div class="phl">${c.hl}</div>
+    <table>
+      <tr><td>아이동반</td><td>${kidLabel[c.kid]}</td></tr>
+      ${c.pet?`<tr><td>애견동반</td><td>🐶 가능(후기 언급)</td></tr>`:""}
+      <tr><td>주차</td><td>${c.parking||"정보 없음"}</td></tr>
+      <tr><td>⚡ 충전소</td><td>${c.evName} <b>${c.evKm<1?Math.round(c.evKm*1000)+"m":c.evKm.toFixed(1)+"km"}</b>${c.evPub?"":" <span class='charger-note'>(개방여부 확인)</span>"}</td></tr>
+    </table>
+    <div style="margin-top:7px"><a href="${naver}" target="_blank">네이버 지도에서 보기 ↗</a></div>
+  </div>`;
+}
+SHOWN.forEach(c=>{
+  const m=L.circleMarker([c.lat,c.lng],{
+    radius:c.tier==="S"?11:c.tier==="A"?9:7,
+    color:"#fff", weight:2, fillColor:tierColor[c.tier], fillOpacity:.95
+  }).bindPopup(popupHtml(c),{maxWidth:300});
+  m.on('click',()=>highlight(c.name,false));
+  markers[c.name]=m;
+});
+
+// ─── 필터/리스트 ───────────────────────────────────────────
+const state={region:"all",tierS:false,kid:false,ev:false};
+function visible(c){
+  if(state.region!=="all"&&c.region!==state.region) return false;
+  if(state.tierS&&c.tier!=="S") return false;
+  if(state.kid&&c.kid!=="yes") return false;
+  if(state.ev&&c.evKm>1) return false;
+  return true;
+}
+function render(){
+  const list=document.getElementById("list"); list.innerHTML="";
+  let n=0;
+  SHOWN.forEach(c=>{
+    const on=visible(c);
+    if(on){ if(!map.hasLayer(markers[c.name])) markers[c.name].addTo(map); }
+    else { if(map.hasLayer(markers[c.name])) map.removeLayer(markers[c.name]); return; }
+    n++;
+    const el=document.createElement("div");
+    el.className="card"; el.dataset.name=c.name;
+    el.innerHTML=`<div class="row1"><span class="rank">${n}</span><span class="name">${c.name}</span><span class="score tier-${c.tier}">${c.score}</span></div>
+      <div class="row2">${regionName[c.region]} · ${c.area} · 블로그 ${c.blog.toLocaleString()}건</div>
+      <div class="tags">
+        ${c.kid==="yes"?'<span class="tag kid-yes">👶 아이OK</span>':c.kid==="no"?'<span class="tag kid-no">🚫 노키즈</span>':''}
+        ${c.pet?'<span class="tag pet">🐶 애견</span>':''}
+        <span class="tag ev">⚡ ${c.evKm<1?Math.round(c.evKm*1000)+"m":c.evKm.toFixed(1)+"km"}</span>
+      </div>`;
+    el.onclick=()=>{ map.flyTo([c.lat,c.lng],15,{duration:.6}); markers[c.name].openPopup(); highlight(c.name,true); };
+    list.appendChild(el);
+  });
+  document.getElementById("count").textContent=`추천 카페 ${n}곳 표시 중 · 점수순 정렬 (100점 만점)`;
+}
+function highlight(name,scrolled){
+  document.querySelectorAll(".card").forEach(el=>{
+    const on=el.dataset.name===name;
+    el.classList.toggle("active",on);
+    if(on&&!scrolled) el.scrollIntoView({block:"nearest",behavior:"smooth"});
+  });
+}
+document.querySelectorAll(".chip.region").forEach(ch=>ch.onclick=()=>{
+  document.querySelectorAll(".chip.region").forEach(x=>x.classList.remove("on"));
+  ch.classList.add("on"); state.region=ch.dataset.r; render();
+});
+document.querySelector(".chip.tier").onclick=e=>{ e.target.classList.toggle("on"); state.tierS=!state.tierS; render(); };
+document.querySelector(".chip.kid").onclick=e=>{ e.target.classList.toggle("on"); state.kid=!state.kid; render(); };
+document.querySelector(".chip.ev").onclick=e=>{ e.target.classList.toggle("on"); state.ev=!state.ev; render(); };
+document.getElementById("toggleChargers").onclick=e=>{
+  e.target.classList.toggle("on");
+  if(map.hasLayer(chargerLayer)) map.removeLayer(chargerLayer); else chargerLayer.addTo(map);
+};
+render();
+</script>
+</body>
+</html>
