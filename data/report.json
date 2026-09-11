@@ -1,6 +1,16 @@
 {
-  "generatedAt": "2026-09-04T22:57:26.955Z",
+  "generatedAt": "2026-09-11T23:09:42.674Z",
   "warnings": [
+    {
+      "cafe": "카페메이븐 행궁동본점",
+      "type": "pet-upgrade",
+      "msg": "애견동반 언급 발견. pet=true 검토."
+    },
+    {
+      "cafe": "칼리오페",
+      "type": "kid-conflict",
+      "msg": "kid=yes 인데 최신 후기에 '노키즈존' 언급 발견. 정책 변경 여부 확인 필요."
+    },
     {
       "cafe": "어반리 st 동탄점",
       "type": "kid-conflict",
