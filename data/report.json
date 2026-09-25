@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-18T23:10:34.758Z",
+  "generatedAt": "2026-09-25T23:55:22.513Z",
   "warnings": [
     {
       "cafe": "카페메이븐 행궁동본점",
@@ -10,6 +10,11 @@
       "cafe": "칼리오페",
       "type": "kid-conflict",
       "msg": "kid=yes 인데 최신 후기에 '노키즈존' 언급 발견. 정책 변경 여부 확인 필요."
+    },
+    {
+      "cafe": "묵리459",
+      "type": "kid-upgrade",
+      "msg": "아이동반 긍정 키워드 3종 발견. kid=yes 승격 검토."
     }
   ]
 }
