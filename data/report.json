@@ -1,11 +1,6 @@
 {
-  "generatedAt": "2026-09-25T23:55:22.513Z",
+  "generatedAt": "2026-10-03T00:20:43.374Z",
   "warnings": [
-    {
-      "cafe": "카페메이븐 행궁동본점",
-      "type": "pet-upgrade",
-      "msg": "애견동반 언급 발견. pet=true 검토."
-    },
     {
       "cafe": "칼리오페",
       "type": "kid-conflict",
@@ -15,6 +10,11 @@
       "cafe": "묵리459",
       "type": "kid-upgrade",
       "msg": "아이동반 긍정 키워드 3종 발견. kid=yes 승격 검토."
+    },
+    {
+      "cafe": "시노퍼",
+      "type": "kid-upgrade",
+      "msg": "아이동반 긍정 키워드 4종 발견. kid=yes 승격 검토."
     }
   ]
 }
