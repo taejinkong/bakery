@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-10-23T23:48:30.675Z",
+  "generatedAt": "2026-10-31T00:36:59.693Z",
   "warnings": [
     {
       "cafe": "어 로프 슬라이스 피스",
       "type": "kid-upgrade",
-      "msg": "아이동반 긍정 키워드 4종 발견. kid=yes 승격 검토."
+      "msg": "아이동반 긍정 키워드 5종 발견. kid=yes 승격 검토."
     },
     {
       "cafe": "칼리오페",
