@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-14T01:22:34.465Z",
+  "generatedAt": "2026-11-21T02:04:12.809Z",
   "warnings": [
     {
       "cafe": "카페 디아즈",
@@ -15,11 +15,6 @@
       "cafe": "칼리오페",
       "type": "kid-conflict",
       "msg": "kid=yes 인데 최신 후기에 '노키즈존' 언급 발견. 정책 변경 여부 확인 필요."
-    },
-    {
-      "cafe": "묵리459",
-      "type": "pet-upgrade",
-      "msg": "애견동반 언급 발견. pet=true 검토."
     },
     {
       "cafe": "카페 아스타나",
